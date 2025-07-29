@@ -81,3 +81,7 @@ public(package) fun withdraw_to<CoinType>(
         ctx.sender(),
     );
 }
+
+public(package) fun get_timelock<CoinType>(self: &Immutables<CoinType>): &TimeLocks {
+    &self.timelocks
+}
