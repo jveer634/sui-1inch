@@ -38,7 +38,7 @@ fun init(ctx: &mut TxContext) {
     transfer::transfer(SetUp { id: object::new(ctx) }, ctx.sender());
 }
 
-public fun setup<AccessToken>(delay: u64, s: SetUp, ctx: &mut TxContext) {
+public fun setup<AccessToken: drop>(delay: u64, s: SetUp, ctx: &mut TxContext) {
     let SetUp { id } = s;
     object::delete(id);
 
@@ -48,7 +48,11 @@ public fun setup<AccessToken>(delay: u64, s: SetUp, ctx: &mut TxContext) {
     });
 }
 
-public(package) fun only_access_token_holder<AccessToken>(
+public(package) fun only_access_token_holder<AccessToken: drop>(
     _: &CrossChainSwap<AccessToken>,
     coin: &Coin<AccessToken>,
 ) { assert!(coin.value() > 1, EInvalidCaller); }
+
+public(package) fun rescue_delay<AccessToken: drop>(self: &CrossChainSwap<AccessToken>): u64 {
+    self.rescue_delay
+}

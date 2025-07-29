@@ -5,6 +5,7 @@ use contracts::timelocks::{Self, TimeLocks};
 use contracts::types::{Self, Bytes32};
 use sui::balance::Balance;
 use sui::bcs;
+use sui::clock::Clock;
 use sui::coin::{Self, Coin};
 use sui::hash;
 use sui::sui::SUI;
@@ -37,6 +38,7 @@ public(package) fun new<CoinType>(
     hash_lock: vector<u8>,
     coin: Coin<CoinType>,
     safety_deposit: Coin<SUI>,
+    clock: &Clock,
     ctx: &mut TxContext,
 ) {
     transfer::share_object(Immutables<CoinType> {
@@ -47,7 +49,7 @@ public(package) fun new<CoinType>(
         safety_deposit: safety_deposit.into_balance(),
         balance: coin.into_balance(),
         hash_lock: types::to_bytes32(hash_lock),
-        timelocks: timelocks::new(),
+        timelocks: timelocks::new(clock.timestamp_ms() / 1000),
     })
 }
 

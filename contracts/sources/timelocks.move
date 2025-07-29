@@ -1,6 +1,7 @@
 /// Module: timelocks
 module contracts::timelocks;
 
+use contracts::base_escrow::CrossChainSwap;
 use sui::clock::Clock;
 
 public struct TimeLocks has copy, drop, store {
@@ -26,9 +27,9 @@ public enum Stage {
 
 // const EInvalidTime: u64 = 3;
 
-public(package) fun new(): TimeLocks {
+public(package) fun new(deployed_at: u64): TimeLocks {
     TimeLocks {
-        deployed_at: 0, // timestamp when escrow starts (from Sui clock)
+        deployed_at,
         src_withdrawal: 0,
         src_public_withdrawal: 0,
         src_cancellation: 0,
@@ -66,3 +67,8 @@ public fun src_cancellation(self: &TimeLocks): u64 {
 public fun src_public_cancellation(self: &TimeLocks): u64 {
     self.src_public_cancellation
 }
+
+public(package) fun rescue_delay<AccessToken: drop>(
+    self: &TimeLocks,
+    ccs: &CrossChainSwap<AccessToken>,
+): u64 { self.deployed_at + ccs.rescue_delay() * 1000 }

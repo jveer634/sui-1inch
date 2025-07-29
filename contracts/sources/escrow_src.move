@@ -15,9 +15,10 @@ public entry fun new<CoinType: drop>(
     hash_lock: vector<u8>,
     safety_deposit: Coin<SUI>,
     coin: Coin<CoinType>,
+    clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    immutables::new(taker, maker, amount, hash_lock, coin, safety_deposit, ctx);
+    immutables::new(taker, maker, amount, hash_lock, coin, safety_deposit, clock, ctx);
 }
 
 public entry fun withdraw<CoinType: drop>(
@@ -51,7 +52,7 @@ public entry fun withdraw_to<CoinType: drop>(
     immutables.withdraw_to(secret, target, ctx);
 }
 
-public entry fun public_withdraw<CoinType, AccessToken>(
+public entry fun public_withdraw<CoinType: drop, AccessToken: drop>(
     secret: vector<u8>,
     immutables: &mut Immutables<CoinType>,
     config: &CrossChainSwap<AccessToken>,
@@ -68,7 +69,7 @@ public entry fun public_withdraw<CoinType, AccessToken>(
     immutables.withdraw_to(secret, ctx.sender(), ctx);
 }
 
-public entry fun cancel<CoinType>(
+public entry fun cancel<CoinType: drop>(
     immutables: &mut Immutables<CoinType>,
     clock: &Clock,
     ctx: &mut TxContext,
@@ -81,7 +82,7 @@ public entry fun cancel<CoinType>(
     immutables.cancel(ctx);
 }
 
-public entry fun public_cancel<CoinType, AccessToken>(
+public entry fun public_cancel<CoinType: drop, AccessToken: drop>(
     immutables: &mut Immutables<CoinType>,
     config: &CrossChainSwap<AccessToken>,
     coin: &Coin<AccessToken>,
