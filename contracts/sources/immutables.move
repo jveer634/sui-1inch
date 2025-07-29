@@ -25,7 +25,6 @@ public struct Immutables<phantom T> has key, store {
 const EInvalidCaller: u64 = 0;
 const EInvalidSecret: u64 = 1;
 
-// only visible inside the package
 public(package) fun hash<T>(self: &Immutables<T>): vector<u8> {
     let bytes = bcs::to_bytes(self);
     hash::keccak256(&bytes)
@@ -78,6 +77,21 @@ public(package) fun withdraw_to<CoinType>(
 
     transfer::public_transfer(
         coin::take(&mut immutables.safety_deposit, value, ctx),
+        ctx.sender(),
+    );
+}
+
+#[allow(lint(self_transfer))]
+public(package) fun cancel<CoinType>(self: &mut Immutables<CoinType>, ctx: &mut TxContext) {
+    transfer::public_transfer(
+        coin::take(&mut self.balance, self.amount, ctx),
+        self.maker,
+    );
+
+    let value = self.safety_deposit.value();
+
+    transfer::public_transfer(
+        coin::take(&mut self.safety_deposit, value, ctx),
         ctx.sender(),
     );
 }
