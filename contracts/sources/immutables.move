@@ -10,7 +10,7 @@ use sui::coin::{Self, Coin};
 use sui::hash;
 use sui::sui::SUI;
 
-public struct Immutables<phantom T> has key, store {
+public struct Immutables<phantom T: drop> has key, store {
     id: UID,
     // orderHash: Bytes32,
     taker: address,
@@ -26,12 +26,12 @@ public struct Immutables<phantom T> has key, store {
 const EInvalidCaller: u64 = 0;
 const EInvalidSecret: u64 = 1;
 
-public(package) fun hash<T>(self: &Immutables<T>): vector<u8> {
+public(package) fun hash<CoinType: drop>(self: &Immutables<CoinType>): vector<u8> {
     let bytes = bcs::to_bytes(self);
     hash::keccak256(&bytes)
 }
 
-public(package) fun new<CoinType>(
+public(package) fun new<CoinType: drop>(
     taker: address,
     maker: address,
     amount: u64,
@@ -53,17 +53,17 @@ public(package) fun new<CoinType>(
     })
 }
 
-public(package) fun check_taker<CoinType>(self: &Immutables<CoinType>, ctx: &TxContext) {
+public(package) fun check_taker<CoinType: drop>(self: &Immutables<CoinType>, ctx: &TxContext) {
     assert!(self.taker == ctx.sender(), EInvalidCaller);
 }
 
-public(package) fun check_secret<CoinType>(self: &Immutables<CoinType>, secret: vector<u8>) {
+public(package) fun check_secret<CoinType: drop>(self: &Immutables<CoinType>, secret: vector<u8>) {
     let secret = types::to_bytes32(secret);
     assert!(self.hash_lock == secret, EInvalidSecret);
 }
 
 #[allow(lint(self_transfer))]
-public(package) fun withdraw_to<CoinType>(
+public(package) fun withdraw_to<CoinType: drop>(
     immutables: &mut Immutables<CoinType>,
     secret: vector<u8>,
     target: address,
@@ -84,7 +84,7 @@ public(package) fun withdraw_to<CoinType>(
 }
 
 #[allow(lint(self_transfer))]
-public(package) fun cancel<CoinType>(self: &mut Immutables<CoinType>, ctx: &mut TxContext) {
+public(package) fun cancel<CoinType: drop>(self: &mut Immutables<CoinType>, ctx: &mut TxContext) {
     transfer::public_transfer(
         coin::take(&mut self.balance, self.amount, ctx),
         self.maker,
@@ -98,6 +98,14 @@ public(package) fun cancel<CoinType>(self: &mut Immutables<CoinType>, ctx: &mut 
     );
 }
 
-public(package) fun get_timelock<CoinType>(self: &Immutables<CoinType>): &TimeLocks {
+public(package) fun get_timelock<CoinType: drop>(self: &Immutables<CoinType>): &TimeLocks {
     &self.timelocks
+}
+
+public fun taker<CoinType: drop>(self: &Immutables<CoinType>): address {
+    self.taker
+}
+
+public fun maker<CoinType: drop>(self: &Immutables<CoinType>): address {
+    self.maker
 }
