@@ -7,11 +7,11 @@ public struct Bytes32 has copy, drop, store {
 }
 
 /// Ensures a vector is exactly 32 bytes to construct our custom type.
-public fun new(input: vector<u8>): Bytes32 {
+public fun to_bytes32(input: vector<u8>): Bytes32 {
     assert!(vector::length(&input) == 32, 0);
     Bytes32 { bytes: input }
 }
 
-public fun to_bytes(self: &Bytes32): vector<u8> {
+public fun from_bytes32(self: &Bytes32): vector<u8> {
     self.bytes
 }
