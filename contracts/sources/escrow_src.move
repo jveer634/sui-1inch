@@ -15,10 +15,11 @@ public entry fun new<CoinType: drop>(
     hash_lock: vector<u8>,
     safety_deposit: Coin<SUI>,
     coin: Coin<CoinType>,
+    timelock: u256,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    immutables::new(taker, maker, amount, hash_lock, coin, safety_deposit, clock, ctx);
+    immutables::new(taker, maker, amount, hash_lock, coin, safety_deposit, timelock, clock, ctx);
 }
 
 public entry fun withdraw<CoinType: drop>(

@@ -38,6 +38,7 @@ public(package) fun new<CoinType: drop>(
     hash_lock: vector<u8>,
     coin: Coin<CoinType>,
     safety_deposit: Coin<SUI>,
+    timelocks: u256,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
@@ -49,7 +50,7 @@ public(package) fun new<CoinType: drop>(
         safety_deposit: safety_deposit.into_balance(),
         balance: coin.into_balance(),
         hash_lock: types::to_bytes32(hash_lock),
-        timelocks: timelocks::new(clock.timestamp_ms() / 1000),
+        timelocks: timelocks::set_deployed_at(timelocks, clock.timestamp_ms() / 1000),
     })
 }
 
