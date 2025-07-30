@@ -2,72 +2,121 @@
 module contracts::escrow_src;
 
 use contracts::base_escrow::CrossChainSwap;
-use contracts::immutables::{Self, Immutables};
+use contracts::immutables::{Self, Immutables, ImmutablesParams};
 use contracts::timelocks;
+use sui::balance::{Self, Balance};
 use sui::clock::Clock;
 use sui::coin::Coin;
 use sui::sui::SUI;
 
-public entry fun new<CoinType: drop>(
-    maker: address,
-    taker: address,
-    order_hash: vector<u8>,
-    amount: u64,
-    hash_lock: vector<u8>,
-    safety_deposit: Coin<SUI>,
+public struct EscrowSrc<phantom CoinType: drop> has key, store {
+    id: UID,
+    deposit: Balance<SUI>,
+    amount: Balance<CoinType>,
+    immutables: Immutables,
+}
+
+public fun new<CoinType: drop>(
+    params: ImmutablesParams,
     coin: Coin<CoinType>,
-    timelock: u256,
+    safety_deposit: Coin<SUI>,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    immutables::new(
-        taker,
-        order_hash,
-        maker,
-        amount,
-        hash_lock,
-        coin,
-        safety_deposit,
-        timelock,
+    let immutables = immutables::new(
+        params,
         clock,
         ctx,
     );
+
+    transfer::share_object(EscrowSrc {
+        id: object::new(ctx),
+        immutables,
+        amount: coin.into_balance(),
+        deposit: safety_deposit.into_balance(),
+    })
 }
 
-public entry fun withdraw<CoinType: drop>(
+#[allow(lint(self_transfer))]
+fun withdraw_internal<CoinType: drop>(
+    self: &mut EscrowSrc<CoinType>,
     secret: vector<u8>,
-    immutables: &mut Immutables<CoinType>,
+    target: address,
+    ctx: &mut TxContext,
+) {
+    let immutables = &self.immutables;
+    immutables.check_secret(secret);
+
+    // safety deposit to caller
+    let coin = balance::withdraw_all(&mut self.deposit).into_coin(ctx);
+    transfer::public_transfer(
+        coin,
+        ctx.sender(),
+    );
+
+    // coin to target
+    let coin = balance::withdraw_all(&mut self.amount).into_coin(ctx);
+    transfer::public_transfer(
+        coin,
+        target,
+    );
+}
+
+// todo: verify logic once
+#[allow(lint(self_transfer))]
+fun cancel_internal<CoinType: drop>(self: &mut EscrowSrc<CoinType>, ctx: &mut TxContext) {
+    let immutables = &self.immutables;
+    // safety deposit to caller
+    let coin = balance::withdraw_all(&mut self.deposit).into_coin(ctx);
+    transfer::public_transfer(
+        coin,
+        ctx.sender(),
+    );
+
+    // coin to maker
+    let coin = balance::withdraw_all(&mut self.amount).into_coin(ctx);
+    transfer::public_transfer(
+        coin,
+        immutables.maker(),
+    );
+}
+
+public fun withdraw<CoinType: drop>(
+    self: &mut EscrowSrc<CoinType>,
+    secret: vector<u8>,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    let immutables = &self.immutables;
     immutables.check_taker(ctx);
 
     let tl = *immutables.get_timelock();
     timelocks::only_after(tl.src_withdrawal(), clock);
     timelocks::only_before(tl.src_cancellation(), clock);
 
-    immutables.withdraw_to(secret, ctx.sender(), ctx);
+    self.withdraw_internal(secret, ctx.sender(), ctx);
 }
 
 public entry fun withdraw_to<CoinType: drop>(
+    self: &mut EscrowSrc<CoinType>,
     secret: vector<u8>,
     target: address,
-    immutables: &mut Immutables<CoinType>,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    let immutables = &self.immutables;
     immutables.check_taker(ctx);
 
     let tl = *immutables.get_timelock();
     timelocks::only_after(tl.src_withdrawal(), clock);
     timelocks::only_before(tl.src_cancellation(), clock);
 
-    immutables.withdraw_to(secret, target, ctx);
+    self.withdraw_internal(secret, target, ctx);
 }
 
 public entry fun public_withdraw<CoinType: drop, AccessToken: drop>(
+    self: &mut EscrowSrc<CoinType>,
     secret: vector<u8>,
-    immutables: &mut Immutables<CoinType>,
     config: &CrossChainSwap<AccessToken>,
     coin: &Coin<AccessToken>,
     clock: &Clock,
@@ -75,37 +124,41 @@ public entry fun public_withdraw<CoinType: drop, AccessToken: drop>(
 ) {
     config.only_access_token_holder(coin);
 
+    let immutables = &self.immutables;
     let tl = *immutables.get_timelock();
     timelocks::only_after(tl.src_public_withdrawal(), clock);
     timelocks::only_before(tl.src_cancellation(), clock);
 
-    immutables.withdraw_to(secret, ctx.sender(), ctx);
+    self.withdraw_internal(secret, ctx.sender(), ctx);
 }
 
 public entry fun cancel<CoinType: drop>(
-    immutables: &mut Immutables<CoinType>,
+    self: &mut EscrowSrc<CoinType>,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    let immutables = &self.immutables;
     immutables.check_taker(ctx);
 
     let tl = *immutables.get_timelock();
     timelocks::only_after(tl.src_cancellation(), clock);
 
-    immutables.cancel(ctx);
+    self.cancel_internal(ctx);
 }
 
 public entry fun public_cancel<CoinType: drop, AccessToken: drop>(
-    immutables: &mut Immutables<CoinType>,
+    self: &mut EscrowSrc<CoinType>,
     config: &CrossChainSwap<AccessToken>,
     coin: &Coin<AccessToken>,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
     config.only_access_token_holder(coin);
+    let immutables = &self.immutables;
+    immutables.check_taker(ctx);
 
     let tl = *immutables.get_timelock();
     timelocks::only_after(tl.src_public_cancellation(), clock);
 
-    immutables.cancel(ctx);
+    self.cancel_internal(ctx);
 }
