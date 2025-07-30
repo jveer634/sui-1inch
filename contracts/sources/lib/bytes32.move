@@ -1,5 +1,5 @@
-/// Module: types
-module contracts::types;
+/// Module: bytes32
+module contracts::bytes32;
 
 /// Custom 'Bytes32' type: Must always contain exactly 32 bytes!
 public struct Bytes32 has copy, drop, store {

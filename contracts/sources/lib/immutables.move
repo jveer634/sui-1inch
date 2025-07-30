@@ -1,8 +1,8 @@
 /// Module: immutables
 module contracts::immutables;
 
+use contracts::bytes32::{Self, Bytes32};
 use contracts::timelocks::{Self, TimeLocks};
-use contracts::types::{Self, Bytes32};
 use sui::balance::Balance;
 use sui::bcs;
 use sui::clock::Clock;
@@ -12,7 +12,7 @@ use sui::sui::SUI;
 
 public struct Immutables<phantom T: drop> has key, store {
     id: UID,
-    // orderHash: Bytes32,
+    order_hash: Bytes32,
     taker: address,
     maker: address,
     amount: u64,
@@ -33,6 +33,7 @@ public(package) fun hash<CoinType: drop>(self: &Immutables<CoinType>): vector<u8
 
 public(package) fun new<CoinType: drop>(
     taker: address,
+    order_hash: vector<u8>,
     maker: address,
     amount: u64,
     hash_lock: vector<u8>,
@@ -44,12 +45,13 @@ public(package) fun new<CoinType: drop>(
 ) {
     transfer::share_object(Immutables<CoinType> {
         id: object::new(ctx),
+        order_hash: bytes32::to_bytes32(order_hash),
         maker,
         taker,
         amount,
         safety_deposit: safety_deposit.into_balance(),
         balance: coin.into_balance(),
-        hash_lock: types::to_bytes32(hash_lock),
+        hash_lock: bytes32::to_bytes32(hash_lock),
         timelocks: timelocks::set_deployed_at(timelocks, clock.timestamp_ms() / 1000),
     })
 }
@@ -59,7 +61,7 @@ public(package) fun check_taker<CoinType: drop>(self: &Immutables<CoinType>, ctx
 }
 
 public(package) fun check_secret<CoinType: drop>(self: &Immutables<CoinType>, secret: vector<u8>) {
-    let secret = types::to_bytes32(secret);
+    let secret = bytes32::to_bytes32(secret);
     assert!(self.hash_lock == secret, EInvalidSecret);
 }
 

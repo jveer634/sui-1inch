@@ -11,6 +11,7 @@ use sui::sui::SUI;
 public entry fun new<CoinType: drop>(
     maker: address,
     taker: address,
+    order_hash: vector<u8>,
     amount: u64,
     hash_lock: vector<u8>,
     safety_deposit: Coin<SUI>,
@@ -19,7 +20,18 @@ public entry fun new<CoinType: drop>(
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
-    immutables::new(taker, maker, amount, hash_lock, coin, safety_deposit, timelock, clock, ctx);
+    immutables::new(
+        taker,
+        order_hash,
+        maker,
+        amount,
+        hash_lock,
+        coin,
+        safety_deposit,
+        timelock,
+        clock,
+        ctx,
+    );
 }
 
 public entry fun withdraw<CoinType: drop>(
