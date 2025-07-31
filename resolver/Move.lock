@@ -2,14 +2,15 @@
 
 [move]
 version = 3
-manifest_digest = "E4E922BC1E207FB3BB934E2DF4673704AA3E9583A2A2BD061E1C149307E97FFA"
-deps_digest = "397E6A9F7A624706DBDFEE056CE88391A15876868FD18A88504DA74EB458D697"
+manifest_digest = "FAF500C31E1CBA10C2FA86EEC14E5F99A37F45826F7AEE2CFF7EEDEE09E8B48A"
+deps_digest = "52B406A7A21811BEF51751CF88DA0E76DAEFFEAC888D4F4060B1A72BBE7D8D35"
 dependencies = [
   { id = "Bridge", name = "Bridge" },
   { id = "MoveStdlib", name = "MoveStdlib" },
   { id = "Sui", name = "Sui" },
   { id = "SuiSystem", name = "SuiSystem" },
   { id = "contracts", name = "contracts" },
+  { id = "lop", name = "lop" },
 ]
 
 [[move.package]]
@@ -46,6 +47,17 @@ dependencies = [
 [[move.package]]
 id = "contracts"
 source = { local = "../contracts" }
+
+dependencies = [
+  { id = "Bridge", name = "Bridge" },
+  { id = "MoveStdlib", name = "MoveStdlib" },
+  { id = "Sui", name = "Sui" },
+  { id = "SuiSystem", name = "SuiSystem" },
+]
+
+[[move.package]]
+id = "lop"
+source = { local = "../lop" }
 
 dependencies = [
   { id = "Bridge", name = "Bridge" },
