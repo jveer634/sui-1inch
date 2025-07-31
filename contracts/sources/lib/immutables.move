@@ -4,7 +4,6 @@ module contracts::immutables;
 use contracts::bytes32::{Self, Bytes32};
 use contracts::timelocks::{Self, TimeLocks};
 use sui::address;
-use sui::bcs;
 use sui::clock::Clock;
 use sui::hash;
 
@@ -32,12 +31,6 @@ public struct Immutables has key, store {
 // errors
 const EInvalidCaller: u64 = 0;
 const EInvalidSecret: u64 = 1;
-
-// todo: implement this
-public(package) fun hash(self: &Immutables): vector<u8> {
-    let bytes = bcs::to_bytes(self);
-    hash::keccak256(&bytes)
-}
 
 public(package) fun new(params: ImmutablesParams, clock: &Clock, ctx: &mut TxContext): Immutables {
     let ImmutablesParams {
@@ -67,7 +60,7 @@ public(package) fun check_taker(self: &Immutables, ctx: &TxContext) {
 }
 
 public(package) fun check_secret(self: &Immutables, secret: vector<u8>) {
-    let secret = bytes32::to_bytes32(secret);
+    let secret = bytes32::to_bytes32(hash::keccak256(&secret));
     assert!(self.hash_lock == secret, EInvalidSecret);
 }
 
