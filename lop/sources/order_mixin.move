@@ -1,3 +1,4 @@
+#[allow(unused_field)]
 /// Module: OrderMixin
 
 module lop::order_mixin;
@@ -15,9 +16,6 @@ public struct Order has drop {
     taking_amount: u256,
     maker_traits: MakerTraits,
 }
-
-const EInvalidatedOrder: u64 = 0;
-const ETakingAmountExceeded: u64 = 1;
 
 // events
 public struct OrderFilled has copy, drop, store {
