@@ -12,7 +12,6 @@ edition = "2024.beta" # edition = "legacy" to use legacy (pre-2024) Move
 
 # For local dependencies use `local = path`. Path is relative to the package root
 contracts = { local = "../contracts" }
-lop = { local = "../lop" }
 
 # To resolve a version conflict and force a specific version for dependency
 # override use `override = true`

@@ -11,7 +11,8 @@ edition = "2024.beta" # edition = "legacy" to use legacy (pre-2024) Move
 # MyRemotePackage = { git = "https://some.remote/host.git", subdir = "remote/path", rev = "main" }
 
 # For local dependencies use `local = path`. Path is relative to the package root
-# Local = { local = "../path/to" }
+lop = { local = "../lop" }
+
 
 # To resolve a version conflict and force a specific version for dependency
 # override use `override = true`
@@ -33,4 +34,3 @@ contracts = "0x0"
 # The dev-addresses section allows overwriting named addresses for the `--test`
 # and `--dev` modes.
 # alice = "0xB0B"
-
