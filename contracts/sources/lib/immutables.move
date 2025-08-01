@@ -7,7 +7,7 @@ use sui::address;
 use sui::clock::Clock;
 use sui::hash;
 
-public struct ImmutablesParams {
+public struct ImmutablesParams has copy, drop, store {
     order_hash: vector<u8>,
     hash_lock: vector<u8>,
     safety_deposit: u256,
@@ -55,6 +55,26 @@ public(package) fun new(params: ImmutablesParams, clock: &Clock, ctx: &mut TxCon
     }
 }
 
+public(package) fun params_new(
+    order_hash: vector<u8>,
+    hash_lock: vector<u8>,
+    safety_deposit: u256,
+    maker: u256,
+    taker: u256,
+    amount: u256,
+    timelocks: u256,
+): ImmutablesParams {
+    ImmutablesParams {
+        order_hash,
+        hash_lock,
+        safety_deposit,
+        maker,
+        taker,
+        amount,
+        timelocks,
+    }
+}
+
 public(package) fun check_taker(self: &Immutables, ctx: &TxContext) {
     assert!(self.taker == ctx.sender(), EInvalidCaller);
 }
@@ -74,4 +94,12 @@ public fun taker(self: &Immutables): address {
 
 public fun maker(self: &Immutables): address {
     self.maker
+}
+
+public fun hash_lock(self: &Immutables): vector<u8> {
+    self.hash_lock.from_bytes32()
+}
+
+public fun timelocks(self: &Immutables): TimeLocks {
+    self.timelocks
 }

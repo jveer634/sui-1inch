@@ -110,3 +110,7 @@ public fun dst_cancellation(self: &TimeLocks): u64 {
 public fun dst_public_cancellation(self: &TimeLocks): u64 {
     self.get(Stage::DstCancellation)
 }
+
+public fun value(self: &TimeLocks): u256 {
+    self.value
+}

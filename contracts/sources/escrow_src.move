@@ -4,9 +4,12 @@ module contracts::escrow_src;
 use contracts::base_escrow::CrossChainSwap;
 use contracts::immutables::{Self, Immutables, ImmutablesParams};
 use contracts::timelocks;
+use lop::order_mixin::Order;
+use sui::address;
 use sui::balance::{Self, Balance};
 use sui::clock::Clock;
 use sui::coin::Coin;
+use sui::event;
 use sui::sui::SUI;
 
 public struct EscrowSrc<phantom CoinType: drop> has key, store {
@@ -16,24 +19,81 @@ public struct EscrowSrc<phantom CoinType: drop> has key, store {
     immutables: Immutables,
 }
 
-public fun new<CoinType: drop>(
+public struct BalanceWrap has store {
+    balance: Balance<SUI>,
     params: ImmutablesParams,
+}
+
+public struct DstImmutablesComplement has copy, drop, store {
+    maker: address,
+    amount: u256,
+    token: u256,
+    safety_deposit: u256,
+    chain_id: u256,
+}
+
+// events
+public struct SrcEscrowCreated has copy, drop, store {
+    immutables: ImmutablesParams,
+    dstImmutables: DstImmutablesComplement,
+}
+
+public fun balance_wrap(deposit: Coin<SUI>, params: ImmutablesParams): BalanceWrap {
+    BalanceWrap {
+        balance: deposit.into_balance(),
+        params,
+    }
+}
+
+public fun post_interaction<CoinType: drop>(
+    order: Order,
+    taker: u256,
+    making_amount: u256,
+    taking_amount: u256,
+    extra_data: u256, // dstTokenAddress is stored in this
     coin: Coin<CoinType>,
-    safety_deposit: Coin<SUI>,
+    balance_wrap: BalanceWrap,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
+    // params.amount = amount or revert
+    let BalanceWrap { balance, params } = balance_wrap;
     let immutables = immutables::new(
         params,
         clock,
         ctx,
     );
+    let hash_lock = immutables.hash_lock();
+    let timelocks = immutables.timelocks();
 
     transfer::share_object(EscrowSrc {
         id: object::new(ctx),
         immutables,
         amount: coin.into_balance(),
-        deposit: safety_deposit.into_balance(),
+        deposit: balance,
+    });
+
+    let order_hash = order.order_hash();
+    let maker = address::to_u256(order.maker());
+
+    let params_copy = immutables::params_new(
+        order_hash,
+        hash_lock,
+        10,
+        maker,
+        taker,
+        making_amount,
+        timelocks.value(),
+    );
+    event::emit(SrcEscrowCreated {
+        immutables: params_copy,
+        dstImmutables: DstImmutablesComplement {
+            chain_id: 1,
+            amount: taking_amount,
+            maker: order.maker(),
+            token: extra_data,
+            safety_deposit: 10,
+        },
     })
 }
 

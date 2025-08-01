@@ -4,8 +4,7 @@ module resolver::resolver;
 use contracts::escrow_dst;
 use contracts::escrow_src;
 use contracts::immutables::ImmutablesParams;
-use lop::order_mixin::{Self, Order};
-use lop::taker_traits;
+use lop::order_mixin::Order;
 use sui::clock::Clock;
 use sui::coin::{Self, Coin};
 use sui::sui::SUI;
@@ -23,34 +22,47 @@ fun init(ctx: &mut TxContext) {
     )
 }
 
+// resolver cap is commented to allow anyone to test
 public fun deploy_src<CoinType: drop>(
     immutables: ImmutablesParams,
     order: Order,
     safety_deposit: Coin<SUI>,
     coin: Coin<CoinType>,
-    signature: vector<u8>,
-    taker_traits: u256,
-    args: vector<u8>,
-    _cap: &ResolverCap,
+    _signature: vector<u8>,
+    // _cap: &ResolverCap,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
     // todo: fix this
-    let amount = coin.value() as u256;
+    let _amount = coin.value() as u256;
 
-    // deploy new source escrow
-    escrow_src::new(immutables, coin, safety_deposit, clock, ctx);
+    // deploy new source escrow - should give a hot potato
+    let wrap = escrow_src::balance_wrap(safety_deposit, immutables);
 
-    // taker traits
-    let taker_traits = taker_traits::new(taker_traits);
-    order_mixin::fill_order_args(order, signature, amount, taker_traits, args, ctx);
+    // lop fills the taker address - so hardcoding here
+    let taker = 10;
+    let extra_data = 1;
+    let making_amount = order.making_amount();
+    let taking_amount = order.taking_amount();
+
+    escrow_src::post_interaction(
+        order,
+        taker,
+        making_amount,
+        taking_amount,
+        extra_data,
+        coin,
+        wrap,
+        clock,
+        ctx,
+    );
 }
 
 public fun deploy_dst(
     params: ImmutablesParams,
     _src_cancellation_ts: u256,
     safety_deposit: Coin<SUI>,
-    _cap: &ResolverCap,
+    // _cap: &ResolverCap,
     clock: &Clock,
     ctx: &mut TxContext,
 ) {
