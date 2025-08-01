@@ -37,3 +37,23 @@ public fun fill_order_args(
     _args: vector<u8>,
     _ctx: &mut TxContext,
 ) {}
+
+public fun order_hash(_self: &Order): vector<u8> {
+    vector::empty()
+}
+
+public fun maker(self: &Order): address {
+    self.maker
+}
+
+public fun receiver(self: &Order): address {
+    self.receiver
+}
+
+public fun taking_amount(self: &Order): u256 {
+    self.taking_amount
+}
+
+public fun making_amount(self: &Order): u256 {
+    self.making_amount
+}
