@@ -1,0 +1,30 @@
+{
+  "name": "sui-1inch",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/jveer634/sui-1inch#readme",
+  "bugs": {
+    "url": "https://github.com/jveer634/sui-1inch/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jveer634/sui-1inch.git"
+  },
+  "license": "ISC",
+  "author": "jveer634",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@1inch/cross-chain-sdk": "^0.1.15",
+    "@mysten/sui": "^1.37.1",
+    "dotenv": "^17.2.1",
+    "ethers": "^6.15.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "zod": "^4.0.14"
+  }
+}

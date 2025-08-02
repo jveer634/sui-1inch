@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2021",
+    "module": "nodenext",                // Or "ESNext" for broad ESM support
+    "moduleResolution": "NodeNext",      // Critical for ESM in Node.js
+    "outDir": "./dist",
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "types": ["node"],
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules"]
+}
